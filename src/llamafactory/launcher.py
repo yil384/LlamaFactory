@@ -17,6 +17,23 @@ import subprocess
 import sys
 from copy import deepcopy
 
+# Allow loading checkpoints saved with older PyTorch/numpy (rng_state files use numpy globals).
+# Monkey-patch torch.load to default to weights_only=False for backward compatibility.
+try:
+    import torch
+    # Disable cuDNN to avoid CUDNN_STATUS_NOT_INITIALIZED errors
+    # (system CUDA 12.1 vs torch's bundled cuDNN for CUDA 12.8)
+    torch.backends.cudnn.enabled = False
+    torch.backends.cuda.enable_cudnn_sdp(False)
+    _orig_torch_load = torch.load
+    def _patched_torch_load(*args, **kwargs):
+        if "weights_only" not in kwargs:
+            kwargs["weights_only"] = False
+        return _orig_torch_load(*args, **kwargs)
+    torch.load = _patched_torch_load
+except Exception:
+    pass
+
 
 USAGE = (
     "-" * 70

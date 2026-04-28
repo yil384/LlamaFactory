@@ -1,0 +1,46 @@
+### Verilog Full SFT — Qwen3.5-9B, codev_r1_sft, 2 epochs, cutoff 16384
+### DeepSpeed ZeRO-3 + offload. Global batch = NPROC_PER_NODE * per_device_train_batch_size * gradient_accumulation_steps
+### Default below assumes 4 GPUs => global batch 4 * 1 * 32 = 128.
+### If running on 8 GPUs, override gradient_accumulation_steps=16 (or set GLOBAL_BATCH=128 in launcher).
+
+model_name_or_path: Qwen/Qwen3.5-9B
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_offload_config.json
+
+dataset: codev_r1_sft
+template: qwen3_5
+cutoff_len: 16384
+preprocessing_num_workers: 4
+
+output_dir: /ssd2/yichen/exp_qwen35_9b_full_verilog/sft
+logging_steps: 10
+save_steps: 200
+save_total_limit: 5
+plot_loss: True
+overwrite_output_dir: false
+
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 32
+learning_rate: 4.0e-6
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+seed: 42
+optim: adamw_torch
+packing: false
+flash_attn: sdpa
+gradient_checkpointing: true
+
+val_size: 0.02
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 600
+
+report_to: wandb
+run_name: verilog-full-qwen35-9b-2ep

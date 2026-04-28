@@ -134,6 +134,11 @@ def run_sft(
             **metric_module,
         )
 
+    # Set trainer reference for PassRateEarlyStoppingCallback
+    for cb in (callbacks or []):
+        if hasattr(cb, "set_trainer"):
+            cb.set_trainer(trainer)
+
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
@@ -154,7 +159,8 @@ def run_sft(
                 )
             else:
                 keys += ["eval_loss", "eval_accuracy"]
-
+            if finetuning_args.pass_rate_eval_file:
+                keys.append("pass_rate")
             plot_loss(training_args.output_dir, keys=keys)
 
     if training_args.predict_with_generate:

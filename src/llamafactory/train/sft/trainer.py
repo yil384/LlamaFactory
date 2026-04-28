@@ -87,7 +87,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self.ref_model = ref_model
 
         if ref_model is not None:
-            from trl.models.utils import prepare_deepspeed, prepare_fsdp
+            try:
+                from trl.models.utils import prepare_deepspeed, prepare_fsdp
+            except ImportError:
+                try:
+                    from trl.trainer.utils import prepare_deepspeed, prepare_fsdp
+                except ImportError:
+                    from trl.trainer.utils import prepare_deepspeed
+                    def prepare_fsdp(model, accelerator): return model
 
             if getattr(self.accelerator.state, "deepspeed_plugin", None) is not None:
                 if not (

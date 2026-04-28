@@ -1,0 +1,45 @@
+### Python Full SFT — Qwen3.5-4B, codev_r1_sft_v32_combined (88,055 samples), 2 epochs, cutoff 16384
+### 2-GPU DeepSpeed ZeRO3, GPU 4/5 (global batch = 2*1*64 = 128)
+
+model_name_or_path: Qwen/Qwen3.5-4B
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_offload_config.json
+
+dataset: codev_r1_sft_v32_combined
+template: qwen3_5
+cutoff_len: 16384
+preprocessing_num_workers: 4
+
+output_dir: /ssd2/yichen/exp_qwen35_4b_full_python/sft
+logging_steps: 10
+save_steps: 200
+save_total_limit: 10
+plot_loss: True
+overwrite_output_dir: false
+resume_from_checkpoint: /ssd2/yichen/exp_qwen35_4b_full_python/sft/checkpoint-400
+
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 64
+learning_rate: 5.0e-6
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+seed: 42
+optim: adamw_torch
+packing: false
+flash_attn: sdpa
+gradient_checkpointing: true
+
+val_size: 0.02
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 600
+
+report_to: wandb
+run_name: python-full-qwen35-4b-v32-2ep

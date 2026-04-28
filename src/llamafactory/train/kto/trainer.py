@@ -24,7 +24,14 @@ from typing import TYPE_CHECKING, Literal, Optional, Union
 import torch
 from transformers import Trainer
 from trl import KTOTrainer
-from trl.models.utils import prepare_deepspeed, prepare_fsdp
+try:
+    from trl.models.utils import prepare_deepspeed, prepare_fsdp
+except ImportError:
+    try:
+        from trl.trainer.utils import prepare_deepspeed, prepare_fsdp
+    except ImportError:
+        from trl.trainer.utils import prepare_deepspeed
+        def prepare_fsdp(model, accelerator): return model
 from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 

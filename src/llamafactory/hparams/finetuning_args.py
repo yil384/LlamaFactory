@@ -530,6 +530,34 @@ class FinetuningArguments(
         default=None,
         metadata={"help": "Number of steps to stop training if the `metric_for_best_model` does not improve."},
     )
+    pass_rate_eval_file: str | None = field(
+        default=None,
+        metadata={"help": "Path to eval jsonl (task_id, question, ground_truth) for pass rate early stopping."},
+    )
+    pass_rate_eval_interval: int = field(
+        default=3,
+        metadata={"help": "Run pass rate eval every N evaluations."},
+    )
+    pass_rate_patience: int = field(
+        default=2,
+        metadata={"help": "Stop if pass rate has no improvement for N pass rate evals."},
+    )
+    pass_rate_num_samples_per_problem: int = field(
+        default=10,
+        metadata={"help": "Number of completions per problem for pass@1 (at least one pass => problem passes)."},
+    )
+    pass_rate_max_samples: int = field(
+        default=50,
+        metadata={"help": "Max samples for pass rate eval."},
+    )
+    test_sft_python_path: str | None = field(
+        default=None,
+        metadata={"help": "Path to test_sft_python.py (CodeV-R1)."},
+    )
+    pass_rate_vllm_gpu: str | None = field(
+        default=None,
+        metadata={"help": "GPU ID(s) for vLLM pass rate inference (e.g. '4' or '4,5'). Uses vLLM instead of HF generate."},
+    )
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},

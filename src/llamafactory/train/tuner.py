@@ -18,6 +18,13 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 import torch.distributed as dist
+
+# Allow loading checkpoints saved with older PyTorch (numpy rng states)
+try:
+    import numpy as np
+    torch.serialization.add_safe_globals([np.core.multiarray._reconstruct, np.ndarray, np.dtype])
+except Exception:
+    pass
 from transformers import EarlyStoppingCallback, PreTrainedModel
 
 from ..data import get_template_and_fix_tokenizer
@@ -27,7 +34,7 @@ from ..extras.misc import find_available_port, get_device_name, get_torch_device
 from ..extras.packages import is_mcore_adapter_available, is_ray_available, is_transformers_version_greater_than
 from ..hparams import RayArguments, get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
-from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
+from .callbacks import LogCallback, PassRateEarlyStoppingCallback, PissaConvertCallback, ReporterCallback
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
@@ -68,6 +75,20 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if finetuning_args.early_stopping_steps is not None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
+
+    if finetuning_args.pass_rate_eval_file is not None:
+        callbacks.append(
+            PassRateEarlyStoppingCallback(
+                eval_file=finetuning_args.pass_rate_eval_file,
+                test_sft_python_path=finetuning_args.test_sft_python_path,
+                eval_interval=finetuning_args.pass_rate_eval_interval,
+                patience=finetuning_args.pass_rate_patience,
+                num_samples_per_problem=finetuning_args.pass_rate_num_samples_per_problem,
+                max_samples=finetuning_args.pass_rate_max_samples,
+                vllm_gpu=finetuning_args.pass_rate_vllm_gpu,
+                base_model_path=model_args.model_name_or_path,
+            )
+        )
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
