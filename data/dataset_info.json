@@ -1790,5 +1790,19 @@
       "user_tag": "human",
       "assistant_tag": "gpt"
     }
+  },
+  "codev_r1_sft_nothink": {
+    "file_name": "codev_r1_sft_nothink.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "user",
+      "assistant_tag": "assistant",
+      "system_tag": "system"
+    }
   }
 }

@@ -1,0 +1,46 @@
+### Verilog Full SFT — Qwen3.5-9B, NO-CoT (no <think>), 2 epochs
+### Data: codev_r1_sft_nothink (87321 rows, ~110M chars vs 2017M with think → 18× smaller)
+### Cutoff drops from 16384 to 4096 since longest sample is now ~3K tokens.
+### Same global batch (128) but each step processes far less data → ~3-4× faster wall time.
+
+model_name_or_path: Qwen/Qwen3.5-9B
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_offload_config.json
+
+dataset: codev_r1_sft_nothink
+template: qwen3_5
+cutoff_len: 4096
+preprocessing_num_workers: 4
+
+output_dir: /ssd2/yichen/exp_qwen35_9b_full_verilog_nothink/sft
+logging_steps: 10
+save_steps: 200
+save_total_limit: 5
+plot_loss: True
+overwrite_output_dir: false
+
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 16
+learning_rate: 4.0e-6
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+seed: 42
+optim: adamw_torch
+packing: false
+flash_attn: sdpa
+gradient_checkpointing: true
+
+val_size: 0.02
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 600
+
+report_to: wandb
+run_name: verilog-full-qwen35-9b-nothink-2ep
