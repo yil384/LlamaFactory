@@ -1,0 +1,67 @@
+### Qwen3.5-9B Verilog Full SFT — v32 data + 8x H200 optimized
+### Target: maximize VerilogEval V2 pass@1 (current Qwen3.5-9B baseline ~37%, target 70%+)
+###
+### Dataset:  verilog_sft_v32_main_plus_fsm_harness
+###   = v32_v3_clean (94,341 cleaned+expanded)  +  fsm_harness_v2_merged (832 high-quality FSM)
+###   = 95,173 rows total
+###
+### Hardware: 8x H200 SXM (141 GB each, 1.128 TB total VRAM)
+###   - DeepSpeed ZeRO-3 WITHOUT CPU offload (plenty of VRAM, offload only slows down)
+###   - flash_attn_2 (faster than sdpa on Hopper)
+###   - packing=true (huge throughput win on 95k dataset; pack short seqs into one)
+###   - per_device_train_batch_size=4 × 8 GPU = micro-bs 32, GA=4 → global batch 128
+###
+### Training plan
+###   - 3 epochs   = ~2,200 steps (94k * 3 / 128)
+###   - lr 5e-6 with cosine, warmup 0.03
+###   - Save every 100 steps (~22 checkpoints, picks ~12-15 worth evaling)
+###   - Expected wall time on 8x H200: ~14-18 hours
+
+model_name_or_path: Qwen/Qwen3.5-9B
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: full
+# ZeRO-3 without CPU offload — H200 has ample VRAM
+deepspeed: examples/deepspeed/ds_z3_config.json
+
+dataset: verilog_sft_v32_main_plus_fsm_harness
+template: qwen3_5
+cutoff_len: 24576
+preprocessing_num_workers: 16
+
+output_dir: /workspace/saves/exp_qwen35_9b_v32_h200/sft
+logging_steps: 10
+save_steps: 100
+save_total_limit: 25
+plot_loss: true
+overwrite_output_dir: false
+
+# 8 GPUs × micro_bs 4 × GA 4 = global batch 128 tokens-grouped seqs
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-6
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.01
+max_grad_norm: 1.0
+bf16: true
+ddp_timeout: 180000000
+seed: 42
+optim: adamw_torch
+
+# Throughput knobs
+packing: true                       # pack short seqs — critical for 95k dataset
+neat_packing: false                 # disabled: transformers>=4.53.0 dropped support (LF parser rejects). Plain packing still gives ~80% of the throughput win.
+flash_attn: fa2                     # H200 supports flash_attn_2
+gradient_checkpointing: true        # tradeoff: ~30% slower for fitting longer context
+
+val_size: 0.005
+per_device_eval_batch_size: 2
+eval_strategy: steps
+eval_steps: 200
+
+report_to: wandb
+run_name: qwen35-9b-verilog-v32-h200
