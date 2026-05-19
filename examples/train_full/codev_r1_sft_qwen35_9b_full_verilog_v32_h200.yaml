@@ -26,7 +26,7 @@ finetuning_type: full
 # ZeRO-3 without CPU offload — H200 has ample VRAM
 deepspeed: examples/deepspeed/ds_z3_config.json
 
-dataset: verilog_sft_v32_main_plus_fsm_harness
+dataset: verilog_sft_v32_main,fsm_harness_v2_merged
 template: qwen3_5
 cutoff_len: 24576
 preprocessing_num_workers: 16

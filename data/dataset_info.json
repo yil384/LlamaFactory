@@ -27,8 +27,8 @@
       "system_tag": "system"
     }
   },
-  "verilog_sft_v32_main_plus_fsm_harness": {
-    "file_name": ["v32_v3_clean.jsonl", "fsm_harness_v2_merged.jsonl"],
+  "fsm_harness_v2_merged": {
+    "file_name": "fsm_harness_v2_merged.jsonl",
     "formatting": "sharegpt",
     "columns": {
       "messages": "messages"
